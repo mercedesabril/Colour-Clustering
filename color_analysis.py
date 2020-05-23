@@ -7,21 +7,17 @@
 from PIL import Image #Python Imaging Library
 
 import sys
-
 import os
 
 import numpy as np
-
 import pandas as pd
-
-from sklearn.cluster import KMeans
-
-from kneed import KneeLocator
-
 from matplotlib import pyplot as plt
 
+from sklearn.cluster import KMeans
+from kneed import KneeLocator
 
-def RGB_histogram(values, name):
+
+def rgb_histogram(values, name):
     '''
     RGB Histogram
     
@@ -76,7 +72,7 @@ def multiple_images(images, outputname):
         new_im.save(outputname +'.jpg')
 
 
-def RGB_image(values, outputname, img, size):
+def rgb_image(values, outputname, img, size):
     '''
     RGB Image
     
@@ -165,7 +161,7 @@ def colors_plot(colors, size, img, name, pixel_label):
     new_im.save('ColorPalette/ColorPalette_' + name +'.jpg')
 
 
-def ElbowCurve(max_clusters, X, min_clusters = 2):
+def elbow_curve(max_clusters, X, min_clusters = 2):
     '''
     Elbow Curve
     
@@ -183,7 +179,7 @@ def ElbowCurve(max_clusters, X, min_clusters = 2):
     score = [kmeans[i].fit(X).score(X) for i in range(len(kmeans))]
     
     x = range(1, len(score)+1)
-    kn = KneeLocator(x, score, curve = 'concave', direction = 'increasing', online = True, S = 3)
+    kn = KneeLocator(x, score, curve = 'concave', direction = 'increasing', online = True)
     
     plt.figure(figsize=(5,5))
     plt.plot(Nc,score)
@@ -196,7 +192,7 @@ def ElbowCurve(max_clusters, X, min_clusters = 2):
     plt.show()
     return(kn.knee)
 
-def ColorClusteringSKlearn(pixel_values, clusters):
+def color_clustering(pixel_values, clusters):
     '''
     Color Clustering
     
@@ -222,7 +218,7 @@ def ColorClusteringSKlearn(pixel_values, clusters):
     
     return(centroids, labels)
 
-def SaveClustersInfo(Name, Colors, Labels, Pixels, max_clusters = 30):
+def save_clusters_info(Name, Colors, Labels, Pixels, max_clusters = 30):
     
     # csv file with the percentage of pixels for each principal color
     df1 = pd.read_csv("ColorClusterPercentage.csv")
@@ -267,11 +263,11 @@ class ImageAnalizer(object):
         self.pixel_label = np.NaN
         
     def RGB_graph(self):
-        return(RGB_histogram(self.pixel_values, self.name))
+        return(rgb_histogram(self.pixel_values, self.name))
     
     def RGB_composite(self):
-         return(RGB_image(self.pixel_values, 'RGB_composite_' + self.name, self.img, self.size))
+         return(rgb_image(self.pixel_values, 'RGB_composite_' + self.name, self.img, self.size))
         
     def Color_palette(self, num_clusters):
-        self.colors, self.pixel_label = ColorClusteringSKlearn(self.pixel_values, num_clusters)
+        self.colors, self.pixel_label = color_clustering(self.pixel_values, num_clusters)
         return(colors_plot(self.colors, self.size, self.img, self.name, self.pixel_label))

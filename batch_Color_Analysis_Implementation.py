@@ -4,25 +4,26 @@
 ##													##
 ######################################################
 
-from color_analysis import *
-
+from color_analysis import multiple_images, rgb_histogram, rgb_image, colors_plot, elbow_curve, color_clustering, save_clusters_info, ImageAnalizer
+import os
 from os import walk
 
 folder = "Imgs"
 
 f = []
-for (dirpath, dirnames, filenames) in walk(folder):
-    f.extend(filenames)
-    break 
+for (dirpath, dirnames, filenames) in walk("Imgs"):
+    for file in filenames:
+        if file.endswith(".jpg"):
+            f.extend([file])
 
-for i in filenames:
+for i in f:
     print(i)
     fullpath = os.path.join(dirpath, i)
     Imagen = ImageAnalizer(fullpath)
     Imagen.RGB_composite()
     Imagen.RGB_graph()
     maxclusters = 30
-    clusters = ElbowCurve(maxclusters, Imagen.pixel_values)
+    clusters = elbow_curve(maxclusters, Imagen.pixel_values)
     Imagen.Color_palette(clusters)
-    SaveClustersInfo(Imagen.name, Imagen.colors, Imagen.pixel_label, Imagen.total_pixels)
+    save_clusters_info(Imagen.name, Imagen.colors, Imagen.pixel_label, Imagen.total_pixels)
 
