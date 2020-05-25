@@ -149,16 +149,7 @@ def colors_plot(colors, size, img, name, pixel_label):
     
     # Put everything together side by side
     images = [img, new_img, new_img2]
-    widths, heights = zip(*(i.size for i in images))
-    total_width = sum(widths)
-    max_height = max(heights)
-    new_im = Image.new('RGB', (total_width, max_height))
-    x_offset = 0
-    for im in images:
-        new_im.paste(im, (x_offset,0))
-        x_offset += im.size[0]
-        
-    new_im.save('ColorPalette/ColorPalette_' + name +'.jpg')
+    final = multiple_images(images, 'ColorPalette/ColorPalette_' + name)
 
 
 def elbow_curve(max_clusters, X, min_clusters = 2):
