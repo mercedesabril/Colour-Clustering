@@ -17,35 +17,6 @@ from sklearn.cluster import KMeans
 from kneed import KneeLocator
 
 
-def rgb_histogram(values, name):
-    '''
-    RGB Histogram
-    
-    - Description:
-        Creates and saves an histogram for the frequency of RGB contributions in the image.
-    
-    - Parameters:
-        values: the pixels RGB data as a list of tuples of length 3 (R, G and B)
-        name: the name of the output image
-    '''
-    
-    if not os.path.isdir("histograms"):
-        os.makedirs("histograms")
-        
-    f = plt.figure(figsize=(15,10))
-    plt.grid()
-    color = ('firebrick','mediumseagreen','royalblue')
-    for i,col in enumerate(color):
-        plt.hist(np.array(values)[:,i], color = col, histtype = 'stepfilled', 
-                     bins = 256, alpha = 0.6)
-    plt.xlim([0,256])
-    plt.title("RGB contributions for "+ name)
-    plt.ylabel("Frequency")
-    plt.xlabel("Contribution to the pixels")
-    
-    plt.savefig("histograms/RGB_contribution_" + name + ".png")
-
-
 def multiple_images(images, outputname):
     '''
     Multiple Images
@@ -70,86 +41,6 @@ def multiple_images(images, outputname):
         new_im.paste(im, (x_offset,0))
         x_offset += im.size[0]
         new_im.save(outputname +'.jpg')
-
-
-def rgb_image(values, outputname, img, size):
-    '''
-    RGB Image
-    
-    - Description:
-        Creates a composite side by side of the image and its RGB contributions
-        
-    - Parameters:
-        values: image RGB data as a list of tuples of length 3 (R, G, B)
-        outputname: output file name
-        img: image data
-        size: image size (width and height)
-    '''
-    
-    if not os.path.isdir("RGBcomposites"):
-        os.makedirs("RGBcomposites")
-    
-    # makes lists of the RGB components exclusively    
-    r = [(d[0], 0, 0) for d in values]
-    g = [(0, d[1], 0) for d in values]
-    b = [(0, 0, d[2]) for d in values]
-    
-    width, height = size
-    
-    new_im1 = Image.new('RGB', (width, height))
-    new_im2 = Image.new('RGB', (width*3, height))
-    x_offset = 0
-    for j in [r, g, b]:
-        new_im1.putdata(j) #transforms the list into an image
-        new_im2.paste(new_im1, (x_offset,0)) #pastes the images side by side
-        x_offset = x_offset + width
-        
-    I = [img, new_im2]
-    final = multiple_images(I, "RGBcomposites/" + outputname)
-    return(final)
-
-
-def colors_plot(colors, size, img, name, pixel_label):
-    '''
-    Palette plotter
-    
-    - Description: 
-        Given certain RGB value or values, plots side by side an image, those RGB values and the image using the RGB values
-        
-    - Parameters:
-        colors: list of RGB values to plot
-        size: image size (width and height)
-        img: image data
-        name: name of the image
-    '''
-    
-    if not os.path.isdir("ColorPalette"):
-        os.makedirs("ColorPalette")
-    
-    # Making the sample colors
-    sample = []
-    number = len(colors)
-    
-    width, height = size
-    
-    for c in colors:
-        sample = sample + ([c] * (round(width*height/number)-1))
-        
-    new_img = Image.new('RGB', (width, height))
-    new_img.putdata(sample)
-    
-    # Making the image using the sample colors
-    new_img2 = Image.new('RGB', (width, height))
-    A = pixel_label.tolist()
-    for i in range(0, len(A)):
-        for j in range(0, len(colors)):
-            if A[i] == j:
-                A[i] = colors[j]
-    new_img2.putdata(A)
-    
-    # Put everything together side by side
-    images = [img, new_img, new_img2]
-    final = multiple_images(images, 'ColorPalette/ColorPalette_' + name)
 
 
 def elbow_curve(max_clusters, X, min_clusters = 2):
@@ -209,37 +100,6 @@ def color_clustering(pixel_values, clusters):
     
     return(centroids, labels)
 
-def save_clusters_info(Name, Colors, Labels, Pixels, max_clusters = 30):
-    
-    # csv file with the percentage of pixels for each principal color
-    df1 = pd.read_csv("ColorClusterPercentage.csv")
-    
-    percentage = []
-    for i in range(0, len(Colors)):
-        A = round((np.sum(Labels==i)/Pixels)*100)
-        percentage = percentage + [A]
-    
-    add = []
-    if len(percentage)<max_clusters:
-        remain = max_clusters-len(percentage)
-        add = [np.NaN]*remain
-    percentage = percentage + add
-    
-    df1[Name] = percentage
-    df1.to_csv(r'ColorClusterPercentage.csv', index = False)
-    
-    # csv file with the principal colors in RGB
-    df2 = pd.read_csv("ColorClusterRGB.csv")
-    
-    add = []
-    if len(Colors)<max_clusters:
-        remain = max_clusters-len(Colors)
-        add = [np.NaN]*remain
-    Colors = Colors + tuple(add)
-    
-    df2[Name] = Colors
-    df2.to_csv(r'ColorClusterRGB.csv', index = False)
-
 class ImageAnalizer(object):
     
     def __init__(self, path):
@@ -252,13 +112,155 @@ class ImageAnalizer(object):
         self.pixel_values = list(self.img.getdata())
         self.colors = np.NaN
         self.pixel_label = np.NaN
-        
-    def RGB_graph(self):
-        return(rgb_histogram(self.pixel_values, self.name))
     
-    def RGB_composite(self):
-         return(rgb_image(self.pixel_values, 'RGB_composite_' + self.name, self.img, self.size))
+    def rgb_histogram(self):
+        '''
+        RGB Histogram
+    
+        - Description:
+            Creates an histogram for the frequency of RGB contributions in the image 
+            using the RGB values for each pixel in the image and saves the figure.
+        '''
+    
+        if not os.path.isdir("histograms"):
+            os.makedirs("histograms")
         
-    def Color_palette(self, num_clusters):
-        self.colors, self.pixel_label = color_clustering(self.pixel_values, num_clusters)
-        return(colors_plot(self.colors, self.size, self.img, self.name, self.pixel_label))
+        plt.figure(figsize=(15,10))
+        plt.grid()
+        color = ('firebrick','mediumseagreen','royalblue')
+        for i,col in enumerate(color):
+            plt.hist(np.array(self.pixel_values)[:,i], color = col, histtype = 'stepfilled', 
+                     bins = 256, alpha = 0.6)
+        plt.xlim([0,256])
+        plt.title("RGB contributions for "+ self.name)
+        plt.ylabel("Frequency")
+        plt.xlabel("Contribution to the pixels")
+    
+        plt.savefig("histograms/RGB_contribution_" + self.name + ".png")
+    
+    def rgb_composite(self):
+        '''
+        RGB Image
+    
+        - Description:
+            Creates a composite side by side of the image and its RGB contributions.
+        '''
+    
+        if not os.path.isdir("RGBcomposites"):
+            os.makedirs("RGBcomposites")
+        
+        r = [(d[0], 0, 0) for d in self.pixel_values]
+        g = [(0, d[1], 0) for d in self.pixel_values]
+        b = [(0, 0, d[2]) for d in self.pixel_values]
+    
+        width, height = self.size
+    
+        new_im1 = Image.new('RGB', (width, height))
+        new_im2 = Image.new('RGB', (width*3, height))
+        x_offset = 0
+        for j in [r, g, b]:
+            new_im1.putdata(j)
+            new_im2.paste(new_im1, (x_offset,0))
+            x_offset = x_offset + width
+        
+        I = [self.img, new_im2]
+        final = multiple_images(I, "RGBcomposites/RGB_composite_" + self.name)
+        return(final)
+    
+    def color_palette(self, num_clusters, folder):
+        '''
+        Palette plotter
+    
+        - Description:
+            Using a clustering function, it extracts the n desired RGB centroids. Then, given 
+            those RGB values, plots side by side three images: the original picture, a sample of
+            the RGB centroids and the picture using the centroids instead the original pixel values.
+        
+        - Parameters:
+            num_clusters: the desired number of clusters
+            folder: the name of the destination folder
+        '''
+        
+        self.colors, self.pixel_label = color_clustering(self.pixel_values, num_clusters)  
+    
+        if not os.path.isdir(folder):
+            os.makedirs(folder)
+    
+        # Making the sample colors
+        sample = []
+        number = len(self.colors)
+        width, height = self.size
+    
+        for c in self.colors:
+            sample = sample + ([c] * (round(width*height/number)-1))
+        
+        new_img = Image.new('RGB', (width, height))
+        new_img.putdata(sample)
+    
+        # Making the image using the sample colors
+        new_img2 = Image.new('RGB', (width, height))
+        A = self.pixel_label.tolist()
+        for i in range(0, len(A)):
+            for j in range(0, len(self.colors)):
+                if A[i] == j:
+                    A[i] = self.colors[j]
+        new_img2.putdata(A)
+    
+        # Put everything together side by side
+        images = [self.img, new_img, new_img2]
+        final = multiple_images(images, folder +'/ColorPalette_' + self.name)
+        
+    def clusters_info(self, file_name):
+    	'''
+    	Save clusters information
+
+    	- Description:
+    		Saves two .csv files, one containing the RGB centroids aand the other the 
+    		percentage of pixel corresponding to each centroid.
+
+    	- Parameters:
+    		file_name: the output files name
+
+    	'''
+        
+        if os.path.exists(file_name + "Percentage.csv") & os.path.exists(file_name + "RGB.csv"):
+            df1 = pd.read_csv(file_name + "Percentage.csv")
+            df2 = pd.read_csv(file_name + "RGB.csv")
+            
+            if df1.shape[0]<len(self.colors):
+                R = abs(df1.shape[0]-len(self.colors))
+                for i in range(0, R):
+                    df1.append(pd.Series(), ignore_index=True)
+                    df2.append(pd.Series(), ignore_index=True)
+                
+        else:
+            df1 = pd.DataFrame()
+            df2 = pd.DataFrame()
+    
+        # working out the percentage of pixels for each principal color
+    
+        percentage = []
+        for i in range(0, len(self.colors)):
+            A = round((np.sum(self.pixel_label==i)/self.total_pixels)*100)
+            percentage = percentage + [A]
+    
+        add = []
+        if len(percentage)<df1.shape[0]:
+            remain = df1.shape[0]-len(percentage)
+            add = [np.NaN]*remain
+        percentage = percentage + add
+    
+        df1[self.name] = percentage
+        df1.to_csv(file_name +'Percentage.csv', index = False)
+    
+        # writing the csv file with the principal colors in RGB
+        
+        Colors = self.colors
+        add = []
+        if len(self.colors)<df2.shape[0]:
+            remain = df2.shape[0]-len(self.colors)
+            add = [np.NaN]*remain
+        Colors = Colors + tuple(add)
+    
+        df2[self.name] = Colors
+        df2.to_csv(file_name + 'RGB.csv', index = False)
