@@ -5,12 +5,15 @@
 #################################################################
 
 from PIL import Image #Python Imaging Library
+from PIL import ImageOps
 
 import sys
 import os
 
 import numpy as np
+import math
 import pandas as pd
+
 from matplotlib import pyplot as plt
 
 from sklearn.cluster import KMeans
@@ -211,19 +214,19 @@ class ImageAnalizer(object):
         final = multiple_images(images, folder +'/ColorPalette_' + self.name)
         
     def clusters_info(self, file_name):
-    	'''
-    	Save clusters information
+        '''
+        Save clusters information
 
-    	- Description:
-    		Saves two .csv files, one containing the RGB centroids aand the other the 
-    		percentage of pixel corresponding to each centroid.
+        - Description:
+            Saves two .csv files, one containing the RGB centroids aand the other the 
+            percentage of pixel corresponding to each centroid.
 
-    	- Parameters:
-    		file_name: the output files name
+        - Parameters:
+            file_name: the output files name
 
-    	'''
-        
-        if os.path.exists(file_name + "Percentage.csv") & os.path.exists(file_name + "RGB.csv"):
+        '''
+
+        if os.path.exists(file_name + "Percentage.csv") and os.path.exists(file_name + "RGB.csv"):
             df1 = pd.read_csv(file_name + "Percentage.csv")
             df2 = pd.read_csv(file_name + "RGB.csv")
             
@@ -232,7 +235,6 @@ class ImageAnalizer(object):
                 for i in range(0, R):
                     df1.append(pd.Series(), ignore_index=True)
                     df2.append(pd.Series(), ignore_index=True)
-                
         else:
             df1 = pd.DataFrame()
             df2 = pd.DataFrame()
@@ -264,3 +266,88 @@ class ImageAnalizer(object):
     
         df2[self.name] = Colors
         df2.to_csv(file_name + 'RGB.csv', index = False)
+
+def color_stripe(size, values, name):
+    '''
+    Color Sampler
+    
+    - Description 
+        Saves a stripe of RGB colors of desired length.
+    
+    - Parameters
+        size: a list of width and height values
+        values: the RGB values to plot
+        name: the output name
+    
+    '''
+    
+    if not os.path.isdir("color_stripe"):
+        os.makedirs("color_stripe")
+        
+    sample = []
+    width, height = size
+    temp = Image.new('RGB', (width, height))
+    new_img = Image.new('RGB', (width*len(values), height))
+    x_offset = 0 
+    
+    for val in values:
+        sample = [val] * ((width*height))
+        temp.putdata(sample)
+        new_img.paste(temp, (x_offset,0))
+        x_offset = x_offset + width
+    
+    new_img.save("color_stripe/"+ name + '.jpg')
+
+
+def collage(images, size, rows, folder, outputname):
+
+    '''
+    Collage
+
+    - Description:
+        Makes a collage of the images given to the function.
+
+    - Parameters:
+        images: a list of the pictures names
+        size: the size wanted for each individual image
+        rows: how many rows the collage is going to have
+        folder: the folder directory where the images are stored
+        outputname: the output file name
+    '''
+    
+    if not os.path.isdir("collage"):
+            os.makedirs("collage")
+
+    final_img = Image.new('RGB', (math.ceil(len(images)/rows)*size, rows*size))
+                
+    x_offset = 0
+    y_offset = 0
+    count = 0
+    
+    for file in images: 
+        
+        img = Image.open(folder + "/" + file + ".jpg")
+        thumb = ImageOps.fit(img, (size, size), Image.ANTIALIAS)
+        
+        final_img.paste(thumb, (x_offset,y_offset))
+        
+        y_offset = y_offset + size
+        count = count + 1
+        
+        if count % rows == 0:
+            x_offset = x_offset + size
+            y_offset = 0
+            
+
+    final_img.show()
+    final_img.save("collage/" + outputname + ".jpg")
+    
+
+
+class SortingColors(object):
+    
+    def __init__(self, DATA, sortby):
+        self.dataset = list(zip(*DATA))
+        self.sorted = sorted(self.dataset, key=lambda row: row[sortby])
+        self.sorted_RGBvalues = [x[1] for x in self.sorted]
+        self.sorted_names = [x[0] for x in self.sorted]

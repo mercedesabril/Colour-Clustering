@@ -4,11 +4,11 @@
 ##													##
 ######################################################
 
-from color_analysis2 import multiple_images, elbow_curve, color_clustering, ImageAnalizer
+from color_analysis import multiple_images, elbow_curve, color_clustering, ImageAnalizer
 import os
 from os import walk
 
-folder = "Imgs"
+folder = "Imgs_done"
 
 f = []
 for (dirpath, dirnames, filenames) in walk(folder):
@@ -24,6 +24,7 @@ for i in f:
     Imagen.rgb_histogram()
     maxclusters = 30
     clusters = elbow_curve(maxclusters, Imagen.pixel_values)
+    #clusters = 3
     Imagen.color_palette(clusters, "ColorPalette_withKnee")
     Imagen.clusters_info("ColorCluster_withKnee_")
 
