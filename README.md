@@ -22,7 +22,7 @@ Also, it was found that the clustering algorithm works better cropping the image
 
 Several ways of sorting colors where tested, and it was determined that the best approach was the * *step sorting* * using 9 steps ans HSV color space. The number of steps can vary from dataset to dataset.
 
-![Image of dataset collage](poner link)
+![Image of dataset collage](https://github.com/mercedesabril/Colour-Clustering/blob/master/collage/collage_resized10p_enhanced_9steps_lumfix.jpg)
 
 
 The colors luminosity plays an important role in the sorting process, not only the step sorting algorithm implements it, but also it's a helpful tool to reduce noise. For that reason, the best sorting results were obtained when enhancing the images' color contrast.
