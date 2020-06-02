@@ -6,6 +6,8 @@
 
 from PIL import Image #Python Imaging Library
 from PIL import ImageOps
+from PIL import ImageEnhance
+from PIL import ImageFilter
 
 import sys
 import os
@@ -105,12 +107,31 @@ def color_clustering(pixel_values, clusters):
 
 class ImageAnalizer(object):
     
-    def __init__(self, path):
+    def __init__(self, path, resize = False, enhance = False):
+
+        '''
+        Class Image Analizer
+
+        - Parameters
+            path: path to the image file
+            resize: True or False, if True, it resizes an image by 10%
+            enhance: True or False, if True it enhances the contrast of an image by 2
+        '''
+
         self.path = path
         self.name = path.split('/')[1].split(".", 1)[0]
         self.img = Image.open(path)
         self.pix = self.img.load()
         self.size = self.img.size
+
+        if resize == True:
+            self.img = ImageOps.crop(self.img, border = self.size[0]*0.1)
+            self.size = self.img.size
+
+        if enhance == True:
+            enh = ImageEnhance.Contrast(self.img)
+            self.img = enh.enhance(2)
+        
         self.total_pixels = self.size[0]*self.size[1]
         self.pixel_values = list(self.img.getdata())
         self.colors = np.NaN
@@ -213,7 +234,7 @@ class ImageAnalizer(object):
         images = [self.img, new_img, new_img2]
         final = multiple_images(images, folder +'/ColorPalette_' + self.name)
         
-    def clusters_info(self, file_name):
+    def clusters_info(self, file_name, max_clusters):
         '''
         Save clusters information
 
@@ -230,8 +251,8 @@ class ImageAnalizer(object):
             df1 = pd.read_csv(file_name + "Percentage.csv")
             df2 = pd.read_csv(file_name + "RGB.csv")
             
-            if df1.shape[0]<len(self.colors):
-                R = abs(df1.shape[0]-len(self.colors))
+            if df1.shape[0]<max_clusters:
+                R = abs(df1.shape[0]-max_clusters)
                 for i in range(0, R):
                     df1.append(pd.Series(), ignore_index=True)
                     df2.append(pd.Series(), ignore_index=True)
@@ -259,8 +280,8 @@ class ImageAnalizer(object):
         
         Colors = self.colors
         add = []
-        if len(self.colors)<df2.shape[0]:
-            remain = df2.shape[0]-len(self.colors)
+        if len(self.colors)<df1.shape[0]:
+            remain = df1.shape[0]-len(self.colors)
             add = [np.NaN]*remain
         Colors = Colors + tuple(add)
     
@@ -348,6 +369,6 @@ class SortingColors(object):
     
     def __init__(self, DATA, sortby):
         self.dataset = list(zip(*DATA))
-        self.sorted = sorted(self.dataset, key=lambda row: row[sortby])
+        self.sorted = sorted(self.dataset, key=lambda row: row[sortby], reverse = True)
         self.sorted_RGBvalues = [x[1] for x in self.sorted]
         self.sorted_names = [x[0] for x in self.sorted]
