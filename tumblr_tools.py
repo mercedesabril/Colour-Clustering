@@ -13,6 +13,22 @@ import pytumblr
 
 def upload_post(folder_of_pictures, picture_name, blogname, picture_color, date_of, published_df, client):
 
+    '''
+    Upload Post
+
+    - Description
+        Tool to upload a new image post.
+
+    - Parameters
+        folder_of_pictures: the name of the folder which contains the pictures
+        picturename: file name of the picture
+        blogname: name of the Tumblr blog the pictures will be uploaded to
+        picture_color: the principal color of the picture as a tuple of 3 (RGB)
+        date_of: the publication date
+        published_df: the dataframe where the upload info is going to be saved
+        client: the Tumblr client
+    '''
+
     img = Image.open(folder_of_pictures + '/' + picture_name + '.jpg')
     thumb = ImageOps.fit(img, (128, 128), Image.ANTIALIAS)
     display(thumb)
@@ -41,6 +57,25 @@ def upload_post(folder_of_pictures, picture_name, blogname, picture_color, date_
 
 def edit_post(published_df, published_df_names_column, published_df_tags_column, published_df_id_column, picture_name, picture_color, blogname, date_of, client):
 
+    '''
+    Edit Post
+
+    - Description
+        Edits the date of publication of a preexistent Tumblr post
+
+    - Parameters
+        published_df: the dataframe with the uploaded post's data
+        published_df_names_column: the name of the column of the dataframe containing the pictures' file names
+        published_df_tags_column: the name of the column of the dataframe containing the publications' tags
+        published_df_id_column: the name of the column of the dataframe containing the publications' idsas strings
+        picture_name: the name of the image file
+        picture_color: the principal color of the picture
+        blogname: name of the Tumblr blog
+        date_of: the new date of publication
+        client: the Tumblr client
+
+    '''
+
     row = published_df[published_df[published_df_names_column] == picture_name].index
             
     tags = published_df[published_df_tags_column][row[0]]
@@ -60,6 +95,23 @@ def edit_post(published_df, published_df_names_column, published_df_tags_column,
 
 
 def publisher(blogname, folder_of_pictures, picture_name, date_of, picture_color, csv_filename, client):
+
+    '''
+    Publisher Tool
+
+    - Description
+       Publishes an images or edits the publication date if it was already published.
+
+    - Parameters
+        blogname: name of the Tumblr blog
+        folder_of_pictures: the name of the folder which contains the pictures
+        picture_name: the name of the image file
+        date_of: date of publication
+        picture_color: the principal color of the image
+        csv_filename: the csv file where the publications' info is stored
+        client: the Tumblr client
+
+    '''
     
     if os.path.exists(csv_filename + '.csv') == False:
         published = pd.DataFrame([], columns = ['name', 'post_id', 'post_date', 'p_color', 'tags'])
